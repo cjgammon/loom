@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  App Sandbox is intentionally DISABLED.
+
+	  ScreenCaptureKit screen recording works under the sandbox, but combining it
+	  with camera + microphone capture, writing freely to ~/Movies/Spool, and the
+	  OAuth loopback/redirect flow is far simpler with the sandbox off for this MVP.
+	  If you later distribute via the Mac App Store, re-enable the sandbox and add
+	  the camera/microphone/screen-recording entitlements explicitly.
+	-->
+	<key>com.apple.security.app-sandbox</key>
+	<false/>
+
+	<!-- Hardened Runtime exceptions for capturing camera and microphone. -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+
+	<!-- Allow outbound network connections (Frame.io API + S3 uploads). -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+</dict>
+</plist>

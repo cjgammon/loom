@@ -1,0 +1,53 @@
+name: Spool
+options:
+  bundleIdPrefix: com.cjgammon
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: "" # set your Apple Developer Team ID in Xcode signing
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  Spool:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources
+        excludes:
+          - "**/*.md"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cjgammon.Spool
+        INFOPLIST_FILE: Sources/App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/App/Spool.entitlements
+        ENABLE_HARDENED_RUNTIME: true
+        COMBINE_HIDPI_IMAGES: true
+        GENERATE_INFOPLIST_FILE: false
+
+  SpoolTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/SpoolTests
+    dependencies:
+      - target: Spool
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cjgammon.SpoolTests
+
+schemes:
+  Spool:
+    build:
+      targets:
+        Spool: all
+    run:
+      config: Debug
+    test:
+      targets:
+        - SpoolTests
