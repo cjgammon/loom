@@ -80,14 +80,28 @@ Frame.io's V4 API authenticates through Adobe IMS, so you register an OAuth app 
 1. Go to the [Adobe Developer Console](https://developer.adobe.com/console) and create
    a new **Project**.
 2. **Add API → Frame.io API** to the project.
-3. Configure **OAuth (Web / Native)** credentials with the redirect URI:
+3. Add an **OAuth credential** (e.g. *OAuth Native App*). Adobe generates a
+   **Redirect URI** for it — for a Native App credential it looks like:
    ```
-   spool://oauth-callback
+   adobe+<hash>://adobeid/<client_id>
    ```
-4. Copy the generated **Client ID**.
-5. Launch Spool → **Settings** (⌘,) → paste the Client ID → **Sign in with Adobe**.
+   Spool doesn't require a specific scheme; it uses whatever redirect URI you give it.
+4. Copy both the **Client ID** and the **Redirect URI** from the credential.
+5. Launch Spool → **Settings** (⌘,) → paste the **Client ID** *and* the **Redirect URI**
+   exactly as shown in the console → **Sign in with Adobe**.
 6. After signing in, pick an **Account → Workspace → Project** as the upload
    destination. Recordings upload to that project's root folder.
+
+> **The Redirect URI must match exactly.** If it doesn't, the Adobe consent screen
+> appears but after "Allow access" the window dead-ends on a blank `…/ims/fromSusi#`
+> page and sign-in never completes — because Adobe redirects to its registered URI,
+> not the one Spool is listening for.
+
+> **Your Frame.io user must be linked to your Adobe ID**, or every API call returns
+> `401 "Your Frame user is not linked to an Adobe ID."` Sign in once at
+> [app.frame.io](https://app.frame.io) with the same Adobe account; for a pre-existing
+> Frame.io account, link it under **Account Settings → Profile → Authentication**
+> (the Frame.io and Adobe emails must match).
 
 You can also bake the Client ID in at build time by adding a `SPOOL_ADOBE_CLIENT_ID`
 key to `Sources/App/Info.plist`.

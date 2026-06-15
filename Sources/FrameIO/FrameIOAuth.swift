@@ -101,7 +101,7 @@ final class FrameIOAuth: NSObject, ObservableObject {
         let callbackURL: URL = try await withCheckedThrowingContinuation { continuation in
             let session = ASWebAuthenticationSession(
                 url: authURL,
-                callbackURLScheme: "spool"
+                callbackURLScheme: FrameIOConfig.callbackScheme
             ) { url, error in
                 if let error = error as? ASWebAuthenticationSessionError,
                    error.code == .canceledLogin {
