@@ -48,13 +48,15 @@ final class FrameIOUploader {
     ) async throws -> String? {
         let fileSize = try Self.fileSize(of: fileURL)
         let name = fileURL.lastPathComponent
+        let mediaType = Self.mimeType(for: fileURL)
 
         // 1. Create the placeholder file and get presigned URLs.
         let created = try await createFile(
             accountID: destination.accountID,
             folderID: destination.folderID,
             name: name,
-            fileSize: fileSize
+            fileSize: fileSize,
+            mediaType: mediaType
         )
         guard let uploadURLs = created.data.upload_urls, !uploadURLs.isEmpty else {
             throw UploadError.noUploadURLs
@@ -71,7 +73,8 @@ final class FrameIOUploader {
         for chunk in chunks {
             try handle.seek(toOffset: UInt64(chunk.offset))
             let data = try handle.read(upToCount: chunk.length) ?? Data()
-            try await put(data: data, to: chunk.url, contentType: "application/octet-stream", index: chunk.index)
+            // Content-Type MUST match the media_type sent in createFile, or S3 rejects it.
+            try await put(data: data, to: chunk.url, contentType: mediaType, index: chunk.index)
             uploaded += data.count
             let fraction = fileSize == 0 ? 1 : Double(uploaded) / Double(fileSize)
             progress(min(fraction, 1.0))
@@ -88,9 +91,10 @@ final class FrameIOUploader {
         accountID: String,
         folderID: String,
         name: String,
-        fileSize: Int
+        fileSize: Int,
+        mediaType: String
     ) async throws -> CreateFileResponse {
-        let body = CreateFileRequest(data: .init(name: name, file_size: fileSize))
+        let body = CreateFileRequest(data: .init(name: name, file_size: fileSize, media_type: mediaType))
         let encoded = try JSONEncoder().encode(body)
         let path = "/accounts/\(accountID)/folders/\(folderID)/files/local_upload"
         let data = try await client.send(path: path, method: "POST", body: encoded)
@@ -142,6 +146,16 @@ final class FrameIOUploader {
             offset += length
         }
         return chunks
+    }
+
+    /// Best-effort MIME type from the file extension; defaults to `video/mp4` since
+    /// Spool only writes `.mp4`. Used for both the create request and the chunk PUTs.
+    static func mimeType(for url: URL) -> String {
+        switch url.pathExtension.lowercased() {
+        case "mp4", "m4v": return "video/mp4"
+        case "mov": return "video/quicktime"
+        default: return "video/mp4"
+        }
     }
 
     static func fileSize(of url: URL) throws -> Int {

@@ -40,4 +40,11 @@ final class ChunkPlanTests: XCTestCase {
     func testEmptyURLListProducesNoChunks() {
         XCTAssertTrue(FrameIOUploader.planChunks(fileSize: 100, uploadURLs: []).isEmpty)
     }
+
+    func testMimeTypeFromExtension() {
+        XCTAssertEqual(FrameIOUploader.mimeType(for: URL(fileURLWithPath: "/x/a.mp4")), "video/mp4")
+        XCTAssertEqual(FrameIOUploader.mimeType(for: URL(fileURLWithPath: "/x/a.mov")), "video/quicktime")
+        // Unknown extensions fall back to mp4 (the only container Spool writes).
+        XCTAssertEqual(FrameIOUploader.mimeType(for: URL(fileURLWithPath: "/x/a.bin")), "video/mp4")
+    }
 }

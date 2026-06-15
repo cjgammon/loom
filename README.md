@@ -46,6 +46,33 @@ macOS will prompt for **Screen Recording**, **Camera**, and **Microphone** the f
 time you record. Grant them in **System Settings → Privacy & Security**. Screen
 Recording in particular requires re-launching the app after granting.
 
+### ⚠️ "Spool would like to record this computer's screen" keeps prompting
+
+If the Screen Recording prompt reappears on every launch **even though Spool is already
+toggled on** in System Settings, the cause is almost always an **unstable code
+signature**. macOS ties permission grants to the app's code-signing identity, not just
+its name. An app signed *ad-hoc* ("Sign to Run Locally", which is what Xcode uses when
+**no Development Team is selected**) gets a **new signature on every build**, so macOS
+treats each build as a different app and re-prompts — while the stale entry lingers in
+the list.
+
+**Fix it once:**
+
+1. In Xcode → target **Spool** → **Signing & Capabilities**, enable **Automatically
+   manage signing** and select your **Team** (a free personal Apple ID team works).
+   This gives the app a stable *Apple Development* identity that survives rebuilds.
+   Avoid "Sign to Run Locally" / "None".
+2. Quit Spool, then reset its stale permission entries and re-grant once:
+   ```bash
+   ./Scripts/reset-permissions.sh     # runs tccutil reset for Spool
+   ```
+   (or manually: select **Spool** in each Privacy list and click the **–** button.)
+3. Rebuild & run, then grant Screen Recording once and relaunch.
+
+Also keep a single copy of `Spool.app` — running it from multiple paths (or from a
+quarantined/translocated location) can defeat the permission match too.
+
+
 ## Frame.io / Adobe Developer Console setup
 
 Frame.io's V4 API authenticates through Adobe IMS, so you register an OAuth app once:
