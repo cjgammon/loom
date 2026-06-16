@@ -113,6 +113,10 @@ struct CreateFileResponse: Decodable {
 struct UploadDestination: Codable, Equatable {
     var accountID: String
     var accountTitle: String
+    // Optional for backward-compatibility with destinations saved before workspace
+    // was tracked; lets the Settings pickers fully restore the prior selection.
+    var workspaceID: String?
+    var workspaceTitle: String?
     var projectID: String
     var projectTitle: String
     var folderID: String

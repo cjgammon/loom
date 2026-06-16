@@ -69,6 +69,8 @@ private struct DestinationPickerView: View {
     @State private var projectID: String?
 
     @State private var loadError: String?
+    /// Suppresses the cascade resets while we programmatically restore a saved choice.
+    @State private var isRestoring = false
 
     var body: some View {
         Group {
@@ -82,27 +84,54 @@ private struct DestinationPickerView: View {
                 Text("Select…").tag(String?.none)
                 ForEach(accounts) { Text($0.title).tag(Optional($0.id)) }
             }
-            .onChange(of: accountID) { _, id in Task { await loadWorkspaces(accountID: id) } }
+            .onChange(of: accountID) { _, id in
+                guard !isRestoring else { return }
+                Task { await loadWorkspaces(accountID: id) }
+            }
 
             Picker("Workspace", selection: $workspaceID) {
                 Text("Select…").tag(String?.none)
                 ForEach(workspaces) { Text($0.title).tag(Optional($0.id)) }
             }
-            .onChange(of: workspaceID) { _, id in Task { await loadProjects(workspaceID: id) } }
+            .onChange(of: workspaceID) { _, id in
+                guard !isRestoring else { return }
+                Task { await loadProjects(workspaceID: id) }
+            }
             .disabled(workspaces.isEmpty)
 
             Picker("Project", selection: $projectID) {
                 Text("Select…").tag(String?.none)
                 ForEach(projects) { Text($0.title).tag(Optional($0.id)) }
             }
-            .onChange(of: projectID) { _, id in selectProject(id) }
+            .onChange(of: projectID) { _, id in
+                guard !isRestoring else { return }
+                selectProject(id)
+            }
             .disabled(projects.isEmpty)
 
             if let loadError = loadError {
                 Text(loadError).font(.caption).foregroundStyle(.orange)
             }
         }
-        .task { await loadAccounts() }
+        .task { await restoreSelection() }
+    }
+
+    /// Load accounts and, if a destination was previously saved, repopulate all three
+    /// pickers to match it so the user doesn't have to re-select on every launch.
+    private func restoreSelection() async {
+        await loadAccounts()
+        guard let dest = state.destination, accountID == nil else { return }
+
+        isRestoring = true
+        defer { isRestoring = false }
+
+        accountID = dest.accountID
+        await loadWorkspaces(accountID: dest.accountID)
+        if let workspaceID = dest.workspaceID {
+            self.workspaceID = workspaceID
+            await loadProjects(workspaceID: workspaceID)
+            projectID = dest.projectID
+        }
     }
 
     private func loadAccounts() async {
@@ -132,9 +161,12 @@ private struct DestinationPickerView: View {
             let folderID = project.root_folder_id
         else { return }
 
+        let workspace = workspaces.first { $0.id == workspaceID }
         state.destination = UploadDestination(
             accountID: accountID,
             accountTitle: account.title,
+            workspaceID: workspaceID,
+            workspaceTitle: workspace?.title,
             projectID: project.id,
             projectTitle: project.title,
             folderID: folderID,
