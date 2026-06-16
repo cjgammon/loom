@@ -16,11 +16,7 @@ struct SpoolApp: App {
                   systemImage: state.isRecording ? "record.circle.fill" : "video.circle")
         }
         .menuBarExtraStyle(.window)
-
-        Settings {
-            SettingsView()
-                .environmentObject(state)
-                .frame(width: 460)
-        }
+        // Settings is shown via SettingsWindowController (an AppKit window) from the
+        // menu — the SwiftUI Settings scene is unreliable for a menu-bar app.
     }
 }
