@@ -103,6 +103,17 @@ final class RecordingCoordinator {
         writer = nil
         state = .idle
 
+        // Mix the separate mic + system-audio tracks into a single track so players
+        // that only play the first audio track (e.g. Frame.io's web player) still
+        // have sound. Best-effort: on failure the original multi-track file is kept.
+        if let url = url {
+            do {
+                try await MoviePostProcessor.flattenAudioInPlace(at: url)
+            } catch {
+                Log.recording.error("Audio flatten failed, keeping multi-track file: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+
         Log.recording.info("Recording finished.")
         return url
     }

@@ -146,8 +146,10 @@ xcodebuild test -scheme Spool -destination 'platform=macOS'
 - The camera bubble is captured in-frame rather than composited, so its on-screen
   position is baked into the video. A true composited bubble (resizable after the
   fact) is a future enhancement.
-- Mic and system audio are written as **separate tracks**; some players show two
-  audio tracks. A mixed single track is a possible follow-up.
+- Mic and system audio are captured as two tracks, then **mixed into a single audio
+  track** in a post-recording pass (`MoviePostProcessor`) so players that only play
+  the first track (e.g. Frame.io) still have sound. Video is passed through without
+  re-encoding.
 - No pause/resume, trimming, or annotations yet.
 - App Sandbox is disabled for this MVP (see `Sources/App/Spool.entitlements`).
 
