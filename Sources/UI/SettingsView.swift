@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var state: AppState
     @State private var clientID = FrameIOConfig.clientID
+    @State private var redirectURI = FrameIOConfig.redirectURI
 
     var body: some View {
         Form {
@@ -13,7 +14,14 @@ struct SettingsView: View {
                     .onChange(of: clientID) { _, newValue in
                         FrameIOConfig.clientID = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                     }
-                Text("Create a project in the Adobe Developer Console, add the Frame.io API, and register the redirect URI `spool://oauth-callback`. Paste the generated Client ID here.")
+
+                TextField("Redirect URI", text: $redirectURI, prompt: Text("e.g. adobe+<hash>://adobeid/<client_id>"))
+                    .textFieldStyle(.roundedBorder)
+                    .onChange(of: redirectURI) { _, newValue in
+                        FrameIOConfig.redirectURI = newValue
+                    }
+
+                Text("In the Adobe Developer Console, add the Frame.io API and copy the **Client ID** and the **Redirect URI** from your OAuth credential. Both must match exactly — an \"OAuth Native App\" credential generates a redirect URI like `adobe+…://adobeid/…`; paste it above.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -18,9 +18,34 @@ struct FrameIOConfig {
     static let authorizeURL = URL(string: "https://ims-na1.adobelogin.com/ims/authorize/v2")!
     static let tokenURL = URL(string: "https://ims-na1.adobelogin.com/ims/token/v3")!
 
-    /// Custom-scheme redirect registered in Info.plist (`CFBundleURLTypes`) AND in the
-    /// Adobe Developer Console OAuth app configuration. The two must match exactly.
-    static let redirectURI = "spool://oauth-callback"
+    /// The OAuth redirect URI. This MUST exactly match the Redirect URI registered on
+    /// your Adobe Developer Console credential. Adobe "OAuth Native App" credentials
+    /// generate one of the form `adobe+<hash>://adobeid/<client_id>` — paste that here
+    /// (Settings) rather than relying on the `spool://` default.
+    ///
+    /// Note: `ASWebAuthenticationSession` intercepts this callback itself, so the
+    /// scheme does NOT need to be registered in Info.plist.
+    private static let redirectURIDefaultsKey = "SpoolRedirectURI"
+
+    static var redirectURI: String {
+        get {
+            if let v = UserDefaults.standard.string(forKey: redirectURIDefaultsKey), !v.isEmpty {
+                return v
+            }
+            if let baked = Bundle.main.object(forInfoDictionaryKey: "SPOOL_REDIRECT_URI") as? String, !baked.isEmpty {
+                return baked
+            }
+            return "spool://oauth-callback"
+        }
+        set { UserDefaults.standard.set(newValue.trimmingCharacters(in: .whitespacesAndNewlines), forKey: redirectURIDefaultsKey) }
+    }
+
+    /// The URL scheme portion of `redirectURI` (everything before `://`), used as the
+    /// `callbackURLScheme` for `ASWebAuthenticationSession`.
+    static var callbackScheme: String {
+        guard let range = redirectURI.range(of: "://") else { return redirectURI }
+        return String(redirectURI[redirectURI.startIndex..<range.lowerBound])
+    }
 
     /// Scopes requested from IMS. `openid`/`profile`/`email` identify the user and
     /// `offline_access` is required to receive a refresh token. `additional_info.roles`

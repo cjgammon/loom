@@ -45,5 +45,15 @@
 			</array>
 		</dict>
 	</array>
+	<!--
+	  Built-in Adobe / Frame.io OAuth credential defaults so sign-in works out of the
+	  box. These come from the Adobe Developer Console "OAuth Native App" credential.
+	  They are NOT secrets: a PKCE native app ships its client ID + redirect URI to
+	  every user, and PKCE secures the flow. Override at runtime in Settings if needed.
+	-->
+	<key>SPOOL_ADOBE_CLIENT_ID</key>
+	<string>e5d56229978c434fade13db7f972630d</string>
+	<key>SPOOL_REDIRECT_URI</key>
+	<string>adobe+1bad59b7af50a6b8f928bfd615efc985e58f1d00://adobeid/e5d56229978c434fade13db7f972630d</string>
 </dict>
 </plist>
