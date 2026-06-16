@@ -59,12 +59,14 @@ struct MenuContentView: View {
 
     private var footer: some View {
         HStack {
-            // Open our AppKit-managed settings window (reliable for a menu-bar app).
-            Button {
-                SettingsWindowController.shared.show(state: state)
-            } label: {
+            // Activate the app on tap so the Settings window comes to the front rather
+            // than opening behind other windows.
+            SettingsLink {
                 Label("Settings", systemImage: "gearshape")
             }
+            .simultaneousGesture(TapGesture().onEnded {
+                NSApp.activate(ignoringOtherApps: true)
+            })
             Spacer()
             Button {
                 NSApplication.shared.terminate(nil)
