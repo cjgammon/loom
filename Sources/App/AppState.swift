@@ -50,11 +50,18 @@ final class AppState: ObservableObject {
     }
     /// Elapsed recording time, updated while recording for the menu-bar timer.
     @Published var recordingElapsed: TimeInterval = 0
+    /// When off, recordings are saved locally and not uploaded to Frame.io.
+    @Published var uploadToFrameIO: Bool {
+        didSet { UserDefaults.standard.set(uploadToFrameIO, forKey: uploadEnabledDefaultsKey) }
+    }
+    /// The most recent recording on disk (for "Reveal in Finder").
+    @Published var lastSavedFileURL: URL?
 
     private let destinationDefaultsKey = "SpoolUploadDestination"
     private let microphoneDefaultsKey = "SpoolMicrophoneID"
     private let cameraDefaultsKey = "SpoolCameraID"
     private let countdownDefaultsKey = "SpoolCountdownSeconds"
+    private let uploadEnabledDefaultsKey = "SpoolUploadEnabled"
 
     private var recordingStartedAt: Date?
     private var elapsedTimerTask: Task<Void, Never>?
@@ -62,6 +69,7 @@ final class AppState: ObservableObject {
     init() {
         // Default countdown to 3s on first launch; honor a stored 0 (off) thereafter.
         countdownSeconds = UserDefaults.standard.object(forKey: countdownDefaultsKey) as? Int ?? 3
+        uploadToFrameIO = UserDefaults.standard.object(forKey: uploadEnabledDefaultsKey) as? Bool ?? true
         destination = loadDestination()
         selectedMicrophoneID = UserDefaults.standard.string(forKey: microphoneDefaultsKey)
         selectedCameraID = UserDefaults.standard.string(forKey: cameraDefaultsKey)
@@ -209,8 +217,11 @@ final class AppState: ObservableObject {
     // MARK: - Upload
 
     private func handleFinishedRecording(at url: URL) async {
-        // If signed in with a destination, upload; otherwise leave the file locally.
-        guard isSignedIn, let destination = destination else {
+        lastSavedFileURL = url
+
+        // Upload only when enabled and signed in with a destination; otherwise the
+        // recording just stays on disk in ~/Movies/Spool.
+        guard uploadToFrameIO, isSignedIn, let destination = destination else {
             phase = .finished(link: nil)
             lastShareLink = nil
             Log.frameio.info("Saved locally (not uploaded): \(url.path, privacy: .public)")

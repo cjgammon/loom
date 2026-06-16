@@ -46,10 +46,24 @@ struct UploadStatusView: View {
                         .help("Open in browser")
                     }
                 } else {
-                    Text("Saved to ~/Movies/Spool. A share link couldn’t be created — check that your Frame.io plan allows public shares.")
+                    // No link: either upload was off/not signed in (deliberate local
+                    // save) or the upload happened but the share link couldn't be made.
+                    let uploaded = state.uploadToFrameIO && state.isSignedIn
+                    Text(uploaded
+                         ? "Saved to ~/Movies/Spool. A share link couldn’t be created — check that your Frame.io plan allows public shares."
+                         : "Saved to ~/Movies/Spool.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    if let fileURL = state.lastSavedFileURL {
+                        Button {
+                            NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+                        } label: {
+                            Label("Reveal in Finder", systemImage: "folder")
+                        }
+                        .buttonStyle(.borderless)
+                    }
                 }
             }
             .onChange(of: link) { _, _ in didCopy = false }

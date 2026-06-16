@@ -23,6 +23,9 @@ struct RecordingControlsView: View {
                 Toggle(isOn: $state.includeSystemAudio) {
                     Label("System audio", systemImage: "speaker.wave.2")
                 }
+                Toggle(isOn: $state.uploadToFrameIO) {
+                    Label("Upload to Frame.io", systemImage: "arrow.up.to.line")
+                }
             }
             .toggleStyle(.switch)
             .controlSize(.small)
