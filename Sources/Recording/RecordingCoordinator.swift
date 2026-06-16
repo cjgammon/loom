@@ -101,8 +101,10 @@ final class RecordingCoordinator {
         do {
             try cameraEngine.configure(device: device)
             let bubble = CameraBubbleWindow(session: cameraEngine.session)
-            bubble.orderFrontRegardless()
             bubbleWindow = bubble
+            // Only reveal the bubble once the first frame arrives, so it never shows
+            // an empty circle.
+            cameraEngine.onReady = { [weak bubble] in bubble?.orderFrontRegardless() }
             cameraEngine.start()
         } catch {
             Log.recording.error("Camera setup failed: \(error.localizedDescription, privacy: .public)")
