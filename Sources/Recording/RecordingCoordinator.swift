@@ -58,13 +58,10 @@ final class RecordingCoordinator {
             micEngine.onAudioSample = { buffer in writer.append(buffer, to: .microphone) }
         }
 
-        // Camera bubble (shown on screen, captured in-frame).
-        if options.includeCamera {
-            try cameraEngine.configure(device: options.cameraDevice)
-            let bubble = CameraBubbleWindow(session: cameraEngine.session)
-            bubble.orderFrontRegardless()
-            self.bubbleWindow = bubble
-            cameraEngine.start()
+        // Camera bubble (shown on screen, captured in-frame). Skip if already warmed
+        // up via warmUpCamera() so it isn't reconfigured/restarted.
+        if options.includeCamera && bubbleWindow == nil {
+            showCameraBubble(device: options.cameraDevice)
         }
 
         // Microphone.
@@ -78,6 +75,38 @@ final class RecordingCoordinator {
 
         state = .recording
         Log.recording.info("Recording started → \(outputURL.lastPathComponent, privacy: .public)")
+    }
+
+    // MARK: - Camera warm-up
+
+    /// Start the camera and show the bubble ahead of recording (e.g. during the
+    /// countdown) so live frames are already flowing when capture begins — otherwise
+    /// the bubble shows an empty circle for the first second. Safe to call repeatedly.
+    func warmUpCamera(device: AVCaptureDevice?) {
+        guard state == .idle, bubbleWindow == nil else { return }
+        showCameraBubble(device: device)
+    }
+
+    /// Tear down a warmed-up camera/bubble (and mic) if recording never started, e.g.
+    /// because `start()` threw after warm-up.
+    func cancelWarmUp() {
+        guard state == .idle else { return }
+        cameraEngine.stop()
+        micEngine.stop()
+        bubbleWindow?.orderOut(nil)
+        bubbleWindow = nil
+    }
+
+    private func showCameraBubble(device: AVCaptureDevice?) {
+        do {
+            try cameraEngine.configure(device: device)
+            let bubble = CameraBubbleWindow(session: cameraEngine.session)
+            bubble.orderFrontRegardless()
+            bubbleWindow = bubble
+            cameraEngine.start()
+        } catch {
+            Log.recording.error("Camera setup failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - Stop

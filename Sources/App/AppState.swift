@@ -146,8 +146,19 @@ final class AppState: ObservableObject {
         }
         phase = .preparing
 
-        // Count down first so the numbers aren't part of the recording.
-        await countdown.run(seconds: countdownSeconds)
+        // Warm up the camera now so the bubble is showing live frames (not an empty
+        // circle) by the time capture starts.
+        if includeCamera {
+            coordinator.warmUpCamera(device: selectedCameraDevice)
+        }
+
+        // Count down first so the numbers aren't part of the recording. The countdown
+        // doubles as camera warm-up time; with no countdown, wait briefly instead.
+        if countdownSeconds > 0 {
+            await countdown.run(seconds: countdownSeconds)
+        } else if includeCamera {
+            try? await Task.sleep(nanoseconds: 700_000_000)
+        }
 
         let options = RecordingOptions(
             source: source,
@@ -162,6 +173,7 @@ final class AppState: ObservableObject {
             phase = .recording
             startElapsedTimer()
         } catch {
+            coordinator.cancelWarmUp()
             phase = .failed(error.localizedDescription)
         }
     }
