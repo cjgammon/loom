@@ -19,6 +19,9 @@ as they land.
 - [x] Frame.io upload (V4, chunked) with OAuth (Adobe IMS + PKCE)
 - [x] Saved upload destination (account / workspace / project)
 - [x] Public share link after upload + "Copy to clipboard"
+- [x] Countdown (3-2-1) before recording starts
+- [x] Menu-bar timer showing elapsed recording time
+- [x] Global hotkey (⌥⌘R) to start/stop from anywhere
 
 ---
 
@@ -27,12 +30,12 @@ as they land.
   display or a whole window). Biggest capture gap.
 - [ ] **Camera bubble polish** — resize, circle/square toggle, mirror, position presets,
   show/hide during recording.
-- [ ] **Countdown** — 3-2-1 before recording starts.
+- [x] **Countdown** — 3-2-1 before recording starts.
 - [ ] **Cursor effects** — click highlight / spotlight, optional keystroke display.
 
 ## During recording
-- [ ] **Global hotkey** to start/stop without opening the menu.
-- [ ] **Menu-bar timer** — elapsed time + one-click Stop in the status item.
+- [x] **Global hotkey** to start/stop without opening the menu (⌥⌘R).
+- [x] **Menu-bar timer** — elapsed time in the status item.
 - [ ] **Pause / resume.**
 - [ ] **Audio level meters** — confirm mic/system levels before recording.
 

@@ -11,8 +11,9 @@ struct SpoolApp: App {
                 .environmentObject(state)
                 .frame(width: 320)
         } label: {
-            // Filled dot while recording, hollow camera otherwise.
-            Image(systemName: state.isRecording ? "record.circle.fill" : "video.circle")
+            // While recording, show a red dot plus the elapsed timer; idle shows a camera.
+            Label(state.isRecording ? state.recordingElapsedString : "",
+                  systemImage: state.isRecording ? "record.circle.fill" : "video.circle")
         }
         .menuBarExtraStyle(.window)
 

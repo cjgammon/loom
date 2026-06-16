@@ -22,6 +22,8 @@ final class AppState: ObservableObject {
     private(set) lazy var client = FrameIOClient(auth: auth)
     private lazy var uploader = FrameIOUploader(client: client)
     private let coordinator = RecordingCoordinator()
+    private let countdown = CountdownController()
+    private let hotKeys = HotKeyManager()
 
     // Published UI state
     @Published var phase: Phase = .idle
@@ -42,15 +44,38 @@ final class AppState: ObservableObject {
         didSet { persistDestination() }
     }
     @Published var lastShareLink: String?
+    /// Seconds of "3-2-1" countdown before capture starts (0 = off).
+    @Published var countdownSeconds: Int {
+        didSet { UserDefaults.standard.set(countdownSeconds, forKey: countdownDefaultsKey) }
+    }
+    /// Elapsed recording time, updated while recording for the menu-bar timer.
+    @Published var recordingElapsed: TimeInterval = 0
 
     private let destinationDefaultsKey = "SpoolUploadDestination"
     private let microphoneDefaultsKey = "SpoolMicrophoneID"
     private let cameraDefaultsKey = "SpoolCameraID"
+    private let countdownDefaultsKey = "SpoolCountdownSeconds"
+
+    private var recordingStartedAt: Date?
+    private var elapsedTimerTask: Task<Void, Never>?
 
     init() {
+        // Default countdown to 3s on first launch; honor a stored 0 (off) thereafter.
+        countdownSeconds = UserDefaults.standard.object(forKey: countdownDefaultsKey) as? Int ?? 3
         destination = loadDestination()
         selectedMicrophoneID = UserDefaults.standard.string(forKey: microphoneDefaultsKey)
         selectedCameraID = UserDefaults.standard.string(forKey: cameraDefaultsKey)
+
+        // Global ⌥⌘R to start/stop recording from anywhere.
+        hotKeys.onTrigger = { [weak self] in
+            Task { @MainActor in self?.toggleRecording() }
+        }
+        hotKeys.register()
+    }
+
+    var recordingElapsedString: String {
+        let total = Int(recordingElapsed)
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 
     var isSignedIn: Bool { auth.isSignedIn }
@@ -102,12 +127,28 @@ final class AppState: ObservableObject {
 
     // MARK: - Recording control
 
+    /// Toggle recording — used by the global hotkey and any toggle UI.
+    func toggleRecording() {
+        switch phase {
+        case .recording:
+            Task { await stopRecording() }
+        case .preparing, .uploading:
+            break // busy; ignore
+        default:
+            Task { await startRecording() }
+        }
+    }
+
     func startRecording() async {
         guard let source = selectedSource else {
             phase = .failed("Choose something to record first.")
             return
         }
         phase = .preparing
+
+        // Count down first so the numbers aren't part of the recording.
+        await countdown.run(seconds: countdownSeconds)
+
         let options = RecordingOptions(
             source: source,
             includeCamera: includeCamera,
@@ -119,17 +160,38 @@ final class AppState: ObservableObject {
         do {
             try await coordinator.start(options: options)
             phase = .recording
+            startElapsedTimer()
         } catch {
             phase = .failed(error.localizedDescription)
         }
     }
 
     func stopRecording() async {
+        stopElapsedTimer()
         guard let url = await coordinator.stop() else {
             phase = .idle
             return
         }
         await handleFinishedRecording(at: url)
+    }
+
+    private func startElapsedTimer() {
+        recordingStartedAt = Date()
+        recordingElapsed = 0
+        elapsedTimerTask?.cancel()
+        elapsedTimerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                guard let self, let start = self.recordingStartedAt else { break }
+                self.recordingElapsed = Date().timeIntervalSince(start)
+            }
+        }
+    }
+
+    private func stopElapsedTimer() {
+        elapsedTimerTask?.cancel()
+        elapsedTimerTask = nil
+        recordingStartedAt = nil
     }
 
     // MARK: - Upload

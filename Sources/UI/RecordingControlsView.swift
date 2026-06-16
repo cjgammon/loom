@@ -72,9 +72,15 @@ struct RecordingActiveView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            Label("Recording…", systemImage: "record.circle.fill")
-                .foregroundStyle(.red)
-                .font(.headline)
+            HStack {
+                Label("Recording…", systemImage: "record.circle.fill")
+                    .foregroundStyle(.red)
+                    .font(.headline)
+                Spacer()
+                Text(state.recordingElapsedString)
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
 
             Button(role: .destructive) {
                 Task { await state.stopRecording() }
@@ -83,6 +89,10 @@ struct RecordingActiveView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+
+            Text("Tip: press ⌥⌘R anywhere to start/stop.")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
         }
     }
 }

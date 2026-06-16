@@ -44,6 +44,17 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Recording") {
+                Picker("Countdown before recording", selection: $state.countdownSeconds) {
+                    Text("Off").tag(0)
+                    Text("3 seconds").tag(3)
+                    Text("5 seconds").tag(5)
+                }
+                Label("Global shortcut: ⌥⌘R to start/stop", systemImage: "keyboard")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+            }
+
             if state.isSignedIn {
                 Section("Upload destination") {
                     DestinationPickerView()

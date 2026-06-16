@@ -59,7 +59,13 @@ struct MenuContentView: View {
 
     private var footer: some View {
         HStack {
-            SettingsLink {
+            // SettingsLink is unreliable from a menu-bar (LSUIElement) app — the window
+            // opens but the app never activates, so it flashes and drops. Activate first,
+            // then open Settings explicitly.
+            Button {
+                NSApp.activate(ignoringOtherApps: true)
+                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            } label: {
                 Label("Settings", systemImage: "gearshape")
             }
             Spacer()
