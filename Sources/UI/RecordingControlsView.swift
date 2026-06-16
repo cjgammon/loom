@@ -27,6 +27,17 @@ struct RecordingControlsView: View {
             .toggleStyle(.switch)
             .controlSize(.small)
 
+            // Choose which camera feeds the bubble when more than one is available.
+            if state.includeCamera && state.availableCameras.count > 1 {
+                Picker("Camera", selection: $state.selectedCameraID) {
+                    ForEach(state.availableCameras, id: \.uniqueID) { camera in
+                        Text(camera.localizedName).tag(Optional(camera.uniqueID))
+                    }
+                }
+                .pickerStyle(.menu)
+                .controlSize(.small)
+            }
+
             // Choose which microphone to record when more than one is available.
             if state.includeMicrophone && state.availableMicrophones.count > 1 {
                 Picker("Mic", selection: $state.selectedMicrophoneID) {

@@ -34,6 +34,10 @@ final class AppState: ObservableObject {
     @Published var selectedMicrophoneID: String? {
         didSet { UserDefaults.standard.set(selectedMicrophoneID, forKey: microphoneDefaultsKey) }
     }
+    @Published var availableCameras: [AVCaptureDevice] = []
+    @Published var selectedCameraID: String? {
+        didSet { UserDefaults.standard.set(selectedCameraID, forKey: cameraDefaultsKey) }
+    }
     @Published var destination: UploadDestination? {
         didSet { persistDestination() }
     }
@@ -41,10 +45,12 @@ final class AppState: ObservableObject {
 
     private let destinationDefaultsKey = "SpoolUploadDestination"
     private let microphoneDefaultsKey = "SpoolMicrophoneID"
+    private let cameraDefaultsKey = "SpoolCameraID"
 
     init() {
         destination = loadDestination()
         selectedMicrophoneID = UserDefaults.standard.string(forKey: microphoneDefaultsKey)
+        selectedCameraID = UserDefaults.standard.string(forKey: cameraDefaultsKey)
     }
 
     var isSignedIn: Bool { auth.isSignedIn }
@@ -80,6 +86,20 @@ final class AppState: ObservableObject {
         availableMicrophones.first { $0.uniqueID == selectedMicrophoneID }
     }
 
+    /// Enumerate cameras for the bubble picker. Keeps the saved selection if still
+    /// present, otherwise falls back to the system default camera.
+    func refreshCameras() {
+        let cameras = CameraEngine.availableCameras()
+        availableCameras = cameras
+        if selectedCameraID == nil || !cameras.contains(where: { $0.uniqueID == selectedCameraID }) {
+            selectedCameraID = AVCaptureDevice.default(for: .video)?.uniqueID ?? cameras.first?.uniqueID
+        }
+    }
+
+    private var selectedCameraDevice: AVCaptureDevice? {
+        availableCameras.first { $0.uniqueID == selectedCameraID }
+    }
+
     // MARK: - Recording control
 
     func startRecording() async {
@@ -93,7 +113,7 @@ final class AppState: ObservableObject {
             includeCamera: includeCamera,
             includeMicrophone: includeMicrophone,
             includeSystemAudio: includeSystemAudio,
-            cameraDevice: nil,
+            cameraDevice: selectedCameraDevice,
             microphoneDevice: selectedMicrophoneDevice
         )
         do {

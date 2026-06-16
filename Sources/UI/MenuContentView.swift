@@ -28,6 +28,7 @@ struct MenuContentView: View {
         .padding(14)
         .task {
             state.refreshMicrophones()
+            state.refreshCameras()
             await state.refreshSources()
         }
     }
