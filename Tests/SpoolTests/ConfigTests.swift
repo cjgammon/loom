@@ -18,8 +18,9 @@ final class ConfigTests: XCTestCase {
         XCTAssertEqual(FrameIOConfig.callbackScheme, "spool")
     }
 
-    func testRedirectURIFallsBackToDefault() {
-        UserDefaults.standard.removeObject(forKey: "SpoolRedirectURI")
-        XCTAssertEqual(FrameIOConfig.redirectURI, "spool://oauth-callback")
+    func testUserDefaultsRedirectOverrideWins() {
+        FrameIOConfig.redirectURI = "myscheme://cb"
+        XCTAssertEqual(FrameIOConfig.redirectURI, "myscheme://cb")
+        XCTAssertEqual(FrameIOConfig.callbackScheme, "myscheme")
     }
 }

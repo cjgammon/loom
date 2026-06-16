@@ -32,6 +32,9 @@ struct FrameIOConfig {
             if let v = UserDefaults.standard.string(forKey: redirectURIDefaultsKey), !v.isEmpty {
                 return v
             }
+            if let baked = Bundle.main.object(forInfoDictionaryKey: "SPOOL_REDIRECT_URI") as? String, !baked.isEmpty {
+                return baked
+            }
             return "spool://oauth-callback"
         }
         set { UserDefaults.standard.set(newValue.trimmingCharacters(in: .whitespacesAndNewlines), forKey: redirectURIDefaultsKey) }
