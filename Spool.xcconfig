@@ -1,0 +1,11 @@
+// Base build configuration for Spool (committed).
+//
+// Personal values — your Apple Development Team ID — must NOT be committed. Put them
+// in Secrets.xcconfig (gitignored) by copying Secrets.xcconfig.example. If that file
+// is absent these committed defaults are used, and Xcode falls back to ad-hoc signing.
+//
+// The `#include?` below is optional: the build still works if Secrets.xcconfig is missing.
+
+DEVELOPMENT_TEAM =
+
+#include? "Secrets.xcconfig"

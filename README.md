@@ -28,17 +28,37 @@ sharing.
 ## Build & run
 
 ```bash
-brew install xcodegen      # one time
-xcodegen generate          # generates Spool.xcodeproj from project.yml
+brew install xcodegen                       # one time
+cp Secrets.xcconfig.example Secrets.xcconfig # then add your Team ID (see below)
+xcodegen generate                           # generates Spool.xcodeproj from project.yml
 open Spool.xcodeproj
 ```
 
-In Xcode: select the **Spool** scheme, set your Apple Developer **Team** under
-Signing & Capabilities (automatic signing), then **Run** (⌘R). A camera icon appears
-in the menu bar.
+In Xcode: select the **Spool** scheme, then **Run** (⌘R). A camera icon appears in the
+menu bar.
 
-> The project file is generated and git-ignored — always run `xcodegen generate`
-> after pulling changes to `project.yml`.
+### Signing (do this once so permissions stick)
+
+Your Apple Development **Team ID** is kept out of version control in `Secrets.xcconfig`
+(gitignored). Find it with:
+
+```bash
+security find-identity -p codesigning -v   # → the 10-char value in (parentheses)
+```
+
+Put it in `Secrets.xcconfig`:
+
+```
+DEVELOPMENT_TEAM = YOURTEAMID
+```
+
+Then `xcodegen generate` again. Because the Team ID lives in the xcconfig (not the
+generated project), your signing identity is **stable across rebuilds and regenerates**
+— which is what stops macOS from re-prompting for Screen Recording (see below). Without
+it, Xcode falls back to ad-hoc signing.
+
+> The `.xcodeproj` is generated and git-ignored — always run `xcodegen generate` after
+> pulling changes to `project.yml`, `Spool.xcconfig`, or after adding/removing files.
 
 ### First-run permissions
 
@@ -58,10 +78,9 @@ the list.
 
 **Fix it once:**
 
-1. In Xcode → target **Spool** → **Signing & Capabilities**, enable **Automatically
-   manage signing** and select your **Team** (a free personal Apple ID team works).
-   This gives the app a stable *Apple Development* identity that survives rebuilds.
-   Avoid "Sign to Run Locally" / "None".
+1. Set `DEVELOPMENT_TEAM` in `Secrets.xcconfig` (see **Signing** above) and re-run
+   `xcodegen generate`. This gives the app a stable *Apple Development* identity that
+   survives rebuilds **and** project regeneration. (A free personal Apple ID team works.)
 2. Quit Spool, then reset its stale permission entries and re-grant once:
    ```bash
    ./Scripts/reset-permissions.sh     # runs tccutil reset for Spool
@@ -103,8 +122,10 @@ Frame.io's V4 API authenticates through Adobe IMS, so you register an OAuth app 
 > Frame.io account, link it under **Account Settings → Profile → Authentication**
 > (the Frame.io and Adobe emails must match).
 
-You can also bake the Client ID in at build time by adding a `SPOOL_ADOBE_CLIENT_ID`
-key to `Sources/App/Info.plist`.
+> **Credentials are not committed.** Spool ships without any Adobe Client ID / Redirect
+> URI — you enter your own in **Settings** (stored per-machine in `UserDefaults`). If you
+> prefer to inject them at build time, define `SPOOL_ADOBE_CLIENT_ID` / `SPOOL_REDIRECT_URI`
+> as build settings in your local `Secrets.xcconfig` and reference them from `Info.plist`.
 
 ## How it works
 

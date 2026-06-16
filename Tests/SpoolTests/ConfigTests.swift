@@ -9,8 +9,9 @@ final class ConfigTests: XCTestCase {
     }
 
     func testCallbackSchemeFromAdobeNativeRedirect() {
-        FrameIOConfig.redirectURI = "adobe+1bad59b7af50a6b8f928bfd615efc985e58f1d00://adobeid/e5d56229978c434fade13db7f972630d"
-        XCTAssertEqual(FrameIOConfig.callbackScheme, "adobe+1bad59b7af50a6b8f928bfd615efc985e58f1d00")
+        // Placeholder values in the shape Adobe's "OAuth Native App" generates.
+        FrameIOConfig.redirectURI = "adobe+0000000000000000000000000000000000000000://adobeid/00000000000000000000000000000000"
+        XCTAssertEqual(FrameIOConfig.callbackScheme, "adobe+0000000000000000000000000000000000000000")
     }
 
     func testCallbackSchemeFromSimpleScheme() {
