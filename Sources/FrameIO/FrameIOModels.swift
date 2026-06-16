@@ -107,6 +107,34 @@ struct CreateFileResponse: Decodable {
     let data: FileData
 }
 
+// MARK: - Share (public Loom-style link)
+
+/// Request body to create a public share for the uploaded file.
+struct CreateShareRequest: Encodable {
+    struct Data: Encodable {
+        let name: String
+        /// "public" makes the link openable by anyone, no Frame.io account needed.
+        let access: String
+        /// Files to include in the share.
+        let file_ids: [String]
+    }
+    let data: Data
+}
+
+/// Response from creating a share. The public URL field name varies across the V4
+/// surface, so several candidates are decoded and the first non-nil one is used.
+struct CreateShareResponse: Decodable {
+    struct ShareData: Decodable {
+        let id: String?
+        let short_url: String?
+        let url: String?
+        let view_url: String?
+
+        var link: String? { short_url ?? url ?? view_url }
+    }
+    let data: ShareData
+}
+
 // MARK: - Destination selection (persisted in UserDefaults)
 
 /// The user's chosen upload destination, resolved down to a concrete folder id.

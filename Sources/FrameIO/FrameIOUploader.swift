@@ -81,7 +81,37 @@ final class FrameIOUploader {
 
         progress(1.0)
         Log.frameio.info("Upload complete: \(name, privacy: .public)")
+
+        // 4. Create a public share so there's a Loom-style link to copy. Best-effort:
+        //    if it fails (e.g. plan restrictions) the upload still succeeded.
+        do {
+            if let shareLink = try await createPublicShare(
+                accountID: destination.accountID,
+                projectID: destination.projectID,
+                fileID: created.data.id,
+                name: name
+            ) {
+                return shareLink
+            }
+        } catch {
+            Log.frameio.error("Share link creation failed: \(error.localizedDescription, privacy: .public)")
+        }
         return created.data.viewLink
+    }
+
+    // MARK: - Public share
+
+    private func createPublicShare(
+        accountID: String,
+        projectID: String,
+        fileID: String,
+        name: String
+    ) async throws -> String? {
+        let body = CreateShareRequest(data: .init(name: name, access: "public", file_ids: [fileID]))
+        let encoded = try JSONEncoder().encode(body)
+        let path = "/accounts/\(accountID)/projects/\(projectID)/shares"
+        let data = try await client.send(path: path, method: "POST", body: encoded)
+        return try JSONDecoder().decode(CreateShareResponse.self, from: data).data.link
     }
 
     // MARK: - Create file

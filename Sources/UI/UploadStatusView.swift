@@ -4,6 +4,7 @@ import SwiftUI
 /// or an error message.
 struct UploadStatusView: View {
     @EnvironmentObject private var state: AppState
+    @State private var didCopy = false
 
     var body: some View {
         switch state.phase {
@@ -16,24 +17,42 @@ struct UploadStatusView: View {
             }
 
         case .finished(let link):
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Recording saved", systemImage: "checkmark.circle.fill")
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Upload complete", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+
                 if let link = link, let url = URL(string: link) {
-                    Link(destination: url) {
-                        Label("Open in Frame.io", systemImage: "arrow.up.right.square")
+                    // Show the share link and a prominent copy button.
+                    Text(link)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .textSelection(.enabled)
+
+                    HStack(spacing: 8) {
+                        Button {
+                            copyToPasteboard(link)
+                        } label: {
+                            Label(didCopy ? "Copied!" : "Copy to clipboard",
+                                  systemImage: didCopy ? "checkmark" : "doc.on.doc")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+
+                        Link(destination: url) {
+                            Image(systemName: "arrow.up.right.square")
+                        }
+                        .help("Open in browser")
                     }
-                    Button {
-                        copyToPasteboard(link)
-                    } label: {
-                        Label("Copy share link", systemImage: "doc.on.doc")
-                    }
-                    .buttonStyle(.borderless)
                 } else {
-                    Text("Saved to ~/Movies/Spool")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text("Saved to ~/Movies/Spool. A share link couldn’t be created — check that your Frame.io plan allows public shares.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .onChange(of: link) { _, _ in didCopy = false }
 
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -49,5 +68,6 @@ struct UploadStatusView: View {
     private func copyToPasteboard(_ string: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(string, forType: .string)
+        didCopy = true
     }
 }
