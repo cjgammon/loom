@@ -74,13 +74,13 @@ struct FrameIOFolder: Decodable, Identifiable, Hashable {
 
 /// Request body for "Create File (local upload)".
 ///
-/// `media_type` is the MIME type of the bytes being uploaded; per the V4 docs the
-/// `Content-Type` header on each presigned-URL `PUT` must match this exactly.
+/// V4 accepts only `name` + `file_size` here — sending `media_type` triggers a
+/// `422 "Unexpected field: media_type"`. The MIME type is applied on the chunk PUT
+/// instead (see `FrameIOUploader`).
 struct CreateFileRequest: Encodable {
     struct Data: Encodable {
         let name: String
         let file_size: Int
-        let media_type: String
     }
     let data: Data
 }

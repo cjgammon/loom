@@ -55,8 +55,7 @@ final class FrameIOUploader {
             accountID: destination.accountID,
             folderID: destination.folderID,
             name: name,
-            fileSize: fileSize,
-            mediaType: mediaType
+            fileSize: fileSize
         )
         guard let uploadURLs = created.data.upload_urls, !uploadURLs.isEmpty else {
             throw UploadError.noUploadURLs
@@ -91,10 +90,9 @@ final class FrameIOUploader {
         accountID: String,
         folderID: String,
         name: String,
-        fileSize: Int,
-        mediaType: String
+        fileSize: Int
     ) async throws -> CreateFileResponse {
-        let body = CreateFileRequest(data: .init(name: name, file_size: fileSize, media_type: mediaType))
+        let body = CreateFileRequest(data: .init(name: name, file_size: fileSize))
         let encoded = try JSONEncoder().encode(body)
         let path = "/accounts/\(accountID)/folders/\(folderID)/files/local_upload"
         let data = try await client.send(path: path, method: "POST", body: encoded)
