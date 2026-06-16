@@ -30,15 +30,21 @@ final class AppState: ObservableObject {
     @Published var includeCamera = true
     @Published var includeMicrophone = true
     @Published var includeSystemAudio = true
+    @Published var availableMicrophones: [AVCaptureDevice] = []
+    @Published var selectedMicrophoneID: String? {
+        didSet { UserDefaults.standard.set(selectedMicrophoneID, forKey: microphoneDefaultsKey) }
+    }
     @Published var destination: UploadDestination? {
         didSet { persistDestination() }
     }
     @Published var lastShareLink: String?
 
     private let destinationDefaultsKey = "SpoolUploadDestination"
+    private let microphoneDefaultsKey = "SpoolMicrophoneID"
 
     init() {
         destination = loadDestination()
+        selectedMicrophoneID = UserDefaults.standard.string(forKey: microphoneDefaultsKey)
     }
 
     var isSignedIn: Bool { auth.isSignedIn }
@@ -60,6 +66,20 @@ final class AppState: ObservableObject {
         availableSources.first { $0.id == selectedSourceID } ?? availableSources.first
     }
 
+    /// Enumerate microphones for the picker. Keeps the saved selection if still present,
+    /// otherwise falls back to the system default.
+    func refreshMicrophones() {
+        let mics = MicrophoneEngine.availableMicrophones()
+        availableMicrophones = mics
+        if selectedMicrophoneID == nil || !mics.contains(where: { $0.uniqueID == selectedMicrophoneID }) {
+            selectedMicrophoneID = AVCaptureDevice.default(for: .audio)?.uniqueID ?? mics.first?.uniqueID
+        }
+    }
+
+    private var selectedMicrophoneDevice: AVCaptureDevice? {
+        availableMicrophones.first { $0.uniqueID == selectedMicrophoneID }
+    }
+
     // MARK: - Recording control
 
     func startRecording() async {
@@ -74,7 +94,7 @@ final class AppState: ObservableObject {
             includeMicrophone: includeMicrophone,
             includeSystemAudio: includeSystemAudio,
             cameraDevice: nil,
-            microphoneDevice: nil
+            microphoneDevice: selectedMicrophoneDevice
         )
         do {
             try await coordinator.start(options: options)

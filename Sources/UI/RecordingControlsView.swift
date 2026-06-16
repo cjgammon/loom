@@ -27,6 +27,17 @@ struct RecordingControlsView: View {
             .toggleStyle(.switch)
             .controlSize(.small)
 
+            // Choose which microphone to record when more than one is available.
+            if state.includeMicrophone && state.availableMicrophones.count > 1 {
+                Picker("Mic", selection: $state.selectedMicrophoneID) {
+                    ForEach(state.availableMicrophones, id: \.uniqueID) { mic in
+                        Text(mic.localizedName).tag(Optional(mic.uniqueID))
+                    }
+                }
+                .pickerStyle(.menu)
+                .controlSize(.small)
+            }
+
             Button {
                 Task { await state.startRecording() }
             } label: {

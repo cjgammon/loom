@@ -26,7 +26,10 @@ struct MenuContentView: View {
             footer
         }
         .padding(14)
-        .task { await state.refreshSources() }
+        .task {
+            state.refreshMicrophones()
+            await state.refreshSources()
+        }
     }
 
     private var header: some View {
